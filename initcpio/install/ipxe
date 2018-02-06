@@ -1,0 +1,7 @@
+#!/bin/bash
+
+build () {
+	add_file "/usr/lib/libnss_dns.so.2" "/usr/lib/libnss_dns.so.2" "$(stat -Lc %a /usr/lib/libnss_dns.so.2)"
+	add_file "/usr/lib/libnss_files.so.2" "/usr/lib/libnss_files.so.2" "$(stat -Lc %a /usr/lib/libnss_files.so.2)"
+	add_runscript
+}

@@ -1,0 +1,32 @@
+#!/usr/bin/ash
+
+run_hook() {
+    modprobe isofs
+    mkdir -p /tmp/cdrom
+    mount /dev/sr0 /tmp/cdrom
+    url=$(grep ipxe /tmp/cdrom/user-data | cut -f 2 -d ' ')
+    if [[ -z "$url" ]]; then
+  	  url="https://bootstrap.gig.tech/ipxe/master"
+  	  url="http://192.168.59.254:8000/config"
+    fi
+    echo "nameserver 8.8.8.8" > /etc/resolv.conf
+    ip link set dev eth0 up
+    busybox udhcpc eth0
+    busybox wget "$url" -O /tmp/config
+    chain="$(grep '^chain' /tmp/config)"
+    kernelurl=$(echo "$chain" | cut -f 2 -d ' ')
+    params=$(echo "$chain" | cut -f 3- -d ' ')
+    initrd="$(grep '^initrd' /tmp/config)"
+    busybox wget "$kernelurl" -O /tmp/kernel
+    extra=""
+    if [[ -n "$initrd" ]]; then
+        initrdurl=$(echo "$initrd" | cut -f 2 -d ' ')
+        busybox wget "$initrdurl" -O /tmp/initrd
+        extra="--initrd=/tmp/initrd"
+
+    fi
+    echo "Params: '$params' extra: '$extra'"
+    kexec -l /tmp/kernel --append="$params" $extra
+    kexec -e 
+}
+
